@@ -1,0 +1,103 @@
+name: Generate Typescript Axios client
+description: Generate typescript axios client
+
+inputs:
+  openapi-file:
+    # openapi 文件路径
+    description: openapi file path
+    required: false
+    default: openapi.yml
+  project-name:
+    # 项目名称
+    description: project name
+    required: true
+  registry:
+    # npm 仓库链接
+    description: npm registry url
+    required: true
+  username:
+    # npm 仓库用户名
+    description: npm registry username
+    required: true
+  password:
+    # npm 仓库密码
+    description: npm registry password
+    required: true
+  email:
+    # npm 仓库邮箱
+    description: npm registry user email
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # 拉取代码
+    - name: Checkout
+      uses: actions/checkout@v2
+    # 缓存 pnpm 包
+    - name: Cache pnpm modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-pnpm
+    # 安装 pnpm
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2.0.1
+      with:
+        version: 6.10.0
+    # 安装 node
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    # 安装 java
+    - name: Setup java
+      uses: actions/setup-java@v2
+      with:
+        distribution: zulu
+        java-version: '11'
+
+    # 安装 zx
+    # https://github.com/google/zx
+    - name: Setup zx
+      run: pnpm i -g zx@4.2.0
+      shell: bash
+    - name: Setup openapi-generator-cli
+      run: pnpm i -g @openapitools/openapi-generator-cli
+      shell: bash
+
+    # 设置 输出目录
+    - name: Set output dir
+      run: |
+        mkdir -p ${{ runner.temp }}/typescript-axios-output
+        echo "TYPESCRIPT_AXIOS_OUTPUT=${{ runner.temp }}/typescript-axios-output" >> $GITHUB_ENV
+      shell: bash
+
+    # 生成代码
+    - name: Generate code
+      run: >-
+        zx ${{ github.action_path }}/generate-typescript-axios.mjs
+        --openapi ${{ inputs.openapi-file }}
+        --project ${{ inputs.project-name }}
+        --output ${{ env.TYPESCRIPT_AXIOS_OUTPUT }}
+      shell: bash
+
+    # 生成 .npmrc 文件
+    - name: Generate .npmrc
+      run: >-
+        zx ${{ github.action_path }}/generate-npmrc.mjs
+        --registry ${{ inputs.registry }}
+        --username ${{ inputs.username }}
+        --password ${{ inputs.password }}
+        --email ${{ inputs.email }}
+      shell: bash
+      working-directory: ${{ env.TYPESCRIPT_AXIOS_OUTPUT }}
+
+    # 发布到 npm
+    - name: Publish to npm
+      run: |
+        pnpm i
+        pnpm run build
+        pnpm publish --registry=${{ inputs.registry }} --no-git-checks
+      shell: bash
+      working-directory: ${{ env.TYPESCRIPT_AXIOS_OUTPUT }}
