@@ -34,8 +34,8 @@ runs:
     # 拉取代码
     - name: Checkout
       uses: actions/checkout@v2
-    # 缓存 pnpm 包
-    - name: Cache pnpm modules
+    # 缓存 pnpm
+    - name: Cache local pnpm store
       uses: actions/cache@v2
       with:
         path: ~/.pnpm-store
@@ -62,6 +62,8 @@ runs:
     - name: Setup zx
       run: pnpm i -g zx@4.2.0
       shell: bash
+    # 安装 openapi-generator-cli
+    # https://github.com/OpenAPITools/openapi-generator
     - name: Setup openapi-generator-cli
       run: pnpm i -g @openapitools/openapi-generator-cli
       shell: bash
