@@ -20,6 +20,6 @@ $`${openapiGenerator} generate \
   -o ${output} \
   --model-package 'model' \
   --api-package 'api' \
-  -t typescript-axios \
+  -t ${path.join(__dirname, 'typescript-axios')} \
   --additional-properties ${additionalProperties.join(',')}
 `
