@@ -84,6 +84,12 @@ runs:
         --output ${{ env.TYPESCRIPT_AXIOS_OUTPUT }}
       shell: bash
 
+    # 安装依赖
+    - name: Install dependencies
+      run: pnpm i
+      shell: bash
+      working-directory: ${{ env.TYPESCRIPT_AXIOS_OUTPUT }}
+
     # 生成 .npmrc 文件
     - name: Generate .npmrc
       run: >-
@@ -98,7 +104,6 @@ runs:
     # 发布到 npm
     - name: Publish to npm
       run: |
-        pnpm i
         pnpm run build
         pnpm publish --registry=${{ inputs.registry }} --no-git-checks
       shell: bash
